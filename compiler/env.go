@@ -1,4 +1,4 @@
-package golisp
+package compiler
 
 import (
 	"errors"
@@ -13,11 +13,10 @@ type Environment struct {
 func (env *Environment) Register(item interface{}) {
 
 	itemType := reflect.TypeOf(item).String()
-	if itemType == "golisp.Buildin" {
+	if itemType == "compiler.Buildin" {
 		build := item.(Buildin)
-		//fmt.Println(build)
 		env.Variables[build.Name] = build
-	} else if itemType == "golisp.Variable" {
+	} else if itemType == "compiler.Variable" {
 		variable := item.(Variable)
 		env.Variables[variable.Name] = variable
 	} else {
@@ -55,7 +54,7 @@ type Buildin struct {
 	Func func([]Node, Environment) interface{}
 }
 
-func NewBuild(name string, function func([]Node, Environment) interface{}) Buildin {
+func NewBuildin(name string, function func([]Node, Environment) interface{}) Buildin {
 	return Buildin{
 		Name: name,
 		Func: function,
@@ -69,6 +68,10 @@ type Func struct {
 	Body []Node
 	Ret  []Node
 }
+
+//func (fun Func) String() string {
+//	return
+//}
 
 type Arg struct {
 	Name  string

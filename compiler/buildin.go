@@ -1,8 +1,15 @@
-package golisp
+package compiler
 
 import (
 	"fmt"
+	"reflect"
 )
+
+var Global Environment
+
+func SetGlobal(env Environment) {
+	Global = env
+}
 
 // (+ 50 50)
 func Plus(args []Node, Env Environment) (ret interface{}) {
@@ -10,7 +17,7 @@ func Plus(args []Node, Env Environment) (ret interface{}) {
 	first := Eval(args[0], Env)
 
 	if first.Type == Tint {
-		sum := first.Value().(int64)
+		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
 			val, _ := Eval(args[pos], Env).ToInt()
 			sum += val
@@ -33,7 +40,7 @@ func Plus(args []Node, Env Environment) (ret interface{}) {
 func Minus(args []Node, Env Environment) (ret interface{}) {
 	first := Eval(args[0], Env)
 	if first.Type == Tint {
-		sum := first.Value().(int64)
+		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
 			val, _ := Eval(args[pos], Env).ToInt()
 			sum -= val
@@ -56,7 +63,7 @@ func Minus(args []Node, Env Environment) (ret interface{}) {
 func Multiply(args []Node, Env Environment) (ret interface{}) {
 	first := Eval(args[0], Env)
 	if first.Type == Tint {
-		sum := first.Value().(int64)
+		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
 			val, _ := Eval(args[pos], Env).ToInt()
 			sum *= val
@@ -80,7 +87,7 @@ func Multiply(args []Node, Env Environment) (ret interface{}) {
 func Divide(args []Node, Env Environment) (ret interface{}) {
 	first := Eval(args[0], Env)
 	if first.Type == Tint {
-		sum := first.Value().(int64)
+		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
 			val, _ := Eval(args[pos], Env).ToInt()
 			sum /= val
@@ -101,6 +108,7 @@ func Divide(args []Node, Env Environment) (ret interface{}) {
 
 // (print "hello world" (+ 1 2 3 4))
 func Print(args []Node, Env Environment) (ret interface{}) {
+
 	for pos, len := 0, len(args)-1; pos <= len; pos++ {
 		fmt.Println((Eval(args[pos], Env).Value()))
 	}
@@ -111,6 +119,7 @@ func Print(args []Node, Env Environment) (ret interface{}) {
 
 // (define test 123)
 func Define(args []Node, Env Environment) (ret interface{}) {
+
 	if len(args) != 2 {
 		panic("[function define] function need two arguments")
 	}
@@ -150,7 +159,7 @@ func Apply(args []Node, Env Environment) (ret interface{}) {
 
 // (lambda (arg...) ...)
 func Lambda(args []Node, Env Environment) (ret interface{}) {
-	global := GetGlobal()
+	global := Global
 
 	fun := Func{Env: Environment{Parent: &global}}
 	for _, arg := range args[0].Vnode {
@@ -159,11 +168,14 @@ func Lambda(args []Node, Env Environment) (ret interface{}) {
 
 	fun.Body = args[1].Vnode
 
+	//fmt.Println(NewNode(fun))
+
 	ret = Eval(NewNode(fun), Env)
 
 	return
 }
 
+// (call add '(1 2 3 4))
 func Call(args []Node, Env Environment) (ret interface{}) {
 	fun := Eval(args[0], Env).Vfunc
 	fun.Env.Variables = make(map[string]interface{})
@@ -179,23 +191,47 @@ func Call(args []Node, Env Environment) (ret interface{}) {
 	return
 }
 
+// (map print '(1 2 3 4))
 func Map(args []Node, Env Environment) (ret interface{}) {
 
-	list := args[1].Value().(NodeList)
+	if reflect.TypeOf(args[1].Value()).String() == "compiler.NodeList" {
+		list := args[1].Value().(NodeList)
 
-	var res NodeList
-	for e := list.Front(); e != nil; e = e.Next() {
-		nodes := []Node{args[0]}
-		nodes = append(nodes, NewNode([]Node{NewNode(e.Value)}))
-		result := Call(nodes, Env)
+		var res NodeList
+		for e := list.Front(); e != nil; e = e.Next() {
+			nodes := []Node{args[0]}
+			nodes = append(nodes, NewNode([]Node{NewNode(e.Value)}))
+			result := Call(nodes, Env)
 
-		res.PushBack(result.(Node).Value())
+			res.PushBack(result.(Node).Value())
+		}
+
+		ret = NewNode(res)
+	} else if reflect.TypeOf(args[1].Value()).String() == "[]interface {}" {
+
+		var res []interface{}
+		for _, ele := range args[1].Value().([]interface{}) {
+
+			nodes := []Node{args[0]}
+			nodes = append(nodes, NewNode([]Node{NewNode(ele)}))
+			result := Call(nodes, Env)
+
+			res = append(res, result.(Node).Value())
+		}
+
+		ret = NewNode(res)
 	}
 
-	ret = NewNode(res)
 	return
 }
 
+// todo
+func List(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo
 func Fold(args []Node, Env Environment) (ret interface{}) {
 
 	return

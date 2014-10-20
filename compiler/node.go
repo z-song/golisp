@@ -1,4 +1,4 @@
-package golisp
+package compiler
 
 import (
 	"container/list"
@@ -19,6 +19,7 @@ const (
 	Tsymbol
 	Tfunc
 	Tnode
+	Tarray
 )
 
 type NodeList struct {
@@ -39,13 +40,14 @@ type Node struct {
 	Type NodeType
 
 	Vstring string
-	Vint    int64
+	Vint    int
 	Vdouble float64
 	Vbool   bool
 	Vlist   NodeList
 	Vnode   []Node
 	Vsymbol string
 	Vfunc   Func
+	Varray  []interface{}
 }
 
 func (node Node) Value() (ret interface{}) {
@@ -74,7 +76,8 @@ func (node Node) Value() (ret interface{}) {
 		}
 		format = format[:len(format)-1] + ")"
 		ret = format
-
+	case Tarray:
+		ret = node.Varray
 	default:
 		ret = nil
 	}
@@ -82,8 +85,55 @@ func (node Node) Value() (ret interface{}) {
 	return
 }
 
+func (node Node) String() (ret string) {
+	switch node.Type {
+	case Tnil:
+		ret = "[nil] : nil"
+	case Tint:
+		ret = "[int] : " + strconv.Itoa(int(node.Vint))
+	case Tdouble:
+		ret = "[double] : " + strconv.FormatFloat(node.Vdouble, 'f', 6, 64)
+	case Tbool:
+		ret = "[bool] : "
+		if node.Vbool {
+			ret += "true"
+		} else {
+			ret += "false"
+		}
+	case Tstring:
+		ret = "[string] : " + node.Vstring
+	case Tlist:
+		ret = node.Vlist.String()
+	case Tnode:
+		ret = "[nodes] : " //node.Vnode
+		for _, item := range node.Vnode {
+			ret += item.String() + "\n"
+		}
+
+	case Tsymbol:
+		ret = "[symbol] : " + node.Vsymbol
+	case Tfunc:
+		format := "lambda("
+		for _, arg := range node.Vfunc.Args {
+			format += arg.Name + " "
+		}
+		format = format[:len(format)-1] + ")"
+		ret = format
+	case Tarray:
+		ret = "[array] : ["
+		for _, item := range node.Varray {
+			ret += NewNode(item).ToString() + " "
+		}
+		ret = ret[:len(ret)-1] + "]"
+	}
+
+	return
+}
+
 func NewNode(data interface{}) (node Node) {
+
 	kind := reflect.TypeOf(data).Kind()
+
 	if kind == reflect.String {
 		node = Node{
 			Type:    Tstring,
@@ -92,12 +142,12 @@ func NewNode(data interface{}) (node Node) {
 	} else if kind == reflect.Int64 {
 		node = Node{
 			Type: Tint,
-			Vint: data.(int64),
+			Vint: data.(int),
 		}
 	} else if kind == reflect.Int {
 		node = Node{
 			Type: Tint,
-			Vint: int64(data.(int)),
+			Vint: data.(int),
 		}
 	} else if kind == reflect.Float64 {
 		node = Node{
@@ -109,15 +159,20 @@ func NewNode(data interface{}) (node Node) {
 			Type:  Tbool,
 			Vbool: data.(bool),
 		}
-	} else if reflect.TypeOf(data).String() == "golisp.NodeList" {
+	} else if reflect.TypeOf(data).String() == "compiler.NodeList" {
 		node = Node{
 			Type:  Tlist,
 			Vlist: data.(NodeList),
 		}
-	} else if reflect.TypeOf(data).String() == "golisp.Func" {
+	} else if reflect.TypeOf(data).String() == "compiler.Func" {
 		node = Node{
 			Type:  Tfunc,
 			Vfunc: data.(Func),
+		}
+	} else if reflect.TypeOf(data).String() == "[]interface {}" {
+		node = Node{
+			Type:   Tarray,
+			Varray: data.([]interface{}),
 		}
 	} else if kind == reflect.Slice {
 		node = Node{
@@ -133,7 +188,31 @@ func NewNode(data interface{}) (node Node) {
 	return
 }
 
-func (node Node) ToInt() (ret int64, err error) {
+func (node Node) ToString() (ret string) {
+	if node.Type == Tint {
+		ret = strconv.Itoa(node.Vint)
+	} else if node.Type == Tdouble {
+		ret = strconv.FormatFloat(node.Vdouble, 'f', 6, 64)
+	} else if node.Type == Tstring {
+		ret = node.Vstring
+	} else if node.Type == Tarray {
+
+		for _, item := range node.Varray {
+			ret += NewNode(item).ToString()
+		}
+
+	} else if node.Type == Tbool {
+		if node.Vbool {
+			ret = "true"
+		} else {
+			ret = "false"
+		}
+	}
+
+	return
+}
+
+func (node Node) ToInt() (ret int, err error) {
 
 	ret = 0
 
@@ -141,11 +220,11 @@ func (node Node) ToInt() (ret int64, err error) {
 		ret = node.Vint
 	}
 	if node.Type == Tdouble {
-		ret = int64(node.Vdouble)
+		ret = int(node.Vdouble)
 	}
 	if node.Type == Tstring {
 		tmp, _ := strconv.Atoi(node.Vstring)
-		ret = int64(tmp)
+		ret = int(tmp)
 	}
 	if node.Type == Tbool {
 		if node.Vbool {

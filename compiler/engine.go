@@ -1,6 +1,7 @@
-package golisp
+package compiler
 
 import (
+	//"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -36,6 +37,22 @@ func (scanner *Scanner) Tokenize() (tokens []string) {
 			scanner.emit()
 			scanner.acc += string(char)
 			scanner.emit()
+		} else if char == '[' {
+			scanner.unclosed++
+			scanner.emit()
+			scanner.acc += "["
+			pos++
+			for pos <= len-1 {
+				if scanner.Code[pos] == ']' {
+					scanner.unclosed--
+					scanner.acc += string(scanner.Code[pos])
+					break
+				}
+				scanner.acc += string(scanner.Code[pos])
+				pos++
+			}
+			scanner.emit()
+
 		} else if char == '"' {
 			scanner.unclosed++
 			scanner.emit()
@@ -74,7 +91,10 @@ func (scanner *Scanner) Tokenize() (tokens []string) {
 		} else {
 			scanner.acc += string(char)
 		}
+
 	}
+
+	scanner.emit()
 
 	if scanner.unclosed != 0 {
 		panic("source code unclosed")
@@ -114,6 +134,22 @@ func (parser *Parser) Parse() (nodes []Node) {
 			}
 			nodes = append(nodes, NewNode(list))
 
+		} else if token[0] == '[' { //list
+			var arr []interface{}
+
+			scanner := Scanner{Code: token[1 : len(token)-1]}
+			listTokens := scanner.Tokenize()
+
+			parser := Parser{Tokens: listTokens}
+			listNodes := parser.Parse()
+
+			for _, node := range listNodes {
+				arr = append(arr, node.Value())
+			}
+
+			//fmt.Println(arr)
+			nodes = append(nodes, NewNode(arr))
+
 		} else if token[0] == '"' { //string
 			nodes = append(nodes, NewNode(strings.Trim(token, `"`)))
 
@@ -125,7 +161,7 @@ func (parser *Parser) Parse() (nodes []Node) {
 				}
 			} else {
 				if i, err := strconv.Atoi(token); err == nil {
-					nodes = append(nodes, NewNode(int64(i)))
+					nodes = append(nodes, NewNode(int(i)))
 				}
 			}
 
@@ -171,36 +207,4 @@ func Eval(node Node, env Environment) (ret Node) {
 	}
 
 	return
-}
-
-var Global Environment
-
-func GetGlobal() Environment {
-	return Global
-}
-
-func Excute(code string) {
-
-	Global.Variables = make(map[string]interface{})
-
-	Global.Register(NewBuild("+", Plus))
-	Global.Register(NewBuild("-", Minus))
-	Global.Register(NewBuild("*", Multiply))
-	Global.Register(NewBuild("/", Divide))
-	Global.Register(NewBuild("print", Print))
-	Global.Register(NewBuild("define", Define))
-	Global.Register(NewBuild("apply", Apply))
-	Global.Register(NewBuild("lambda", Lambda))
-	Global.Register(NewBuild("call", Call))
-	Global.Register(NewBuild("map", Map))
-
-	scanner := Scanner{Code: code}
-	tokens := scanner.Tokenize()
-
-	parser := Parser{Tokens: tokens}
-	nodes := parser.Parse()
-
-	for _, node := range nodes {
-		Eval(node, Global)
-	}
 }
