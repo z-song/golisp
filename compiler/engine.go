@@ -2,6 +2,7 @@ package compiler
 
 import (
 	//"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
@@ -23,7 +24,6 @@ func (scanner *Scanner) emit() {
 }
 
 func (scanner *Scanner) Tokenize() (tokens []string) {
-
 	for pos, len := 0, len(scanner.Code)-1; pos <= len; pos++ {
 		char := byte(scanner.Code[pos])
 
@@ -101,7 +101,6 @@ func (scanner *Scanner) Tokenize() (tokens []string) {
 	}
 
 	tokens = scanner.Tokens
-
 	return
 }
 
@@ -137,17 +136,16 @@ func (parser *Parser) Parse() (nodes []Node) {
 		} else if token[0] == '[' { //list
 			var arr []interface{}
 
-			scanner := Scanner{Code: token[1 : len(token)-1]}
+			scanner := Scanner{Code: "(" + token[1:len(token)-1] + ")"}
 			listTokens := scanner.Tokenize()
 
 			parser := Parser{Tokens: listTokens}
 			listNodes := parser.Parse()
 
-			for _, node := range listNodes {
+			for _, node := range listNodes[0].Vnode {
 				arr = append(arr, node.Value())
 			}
 
-			//fmt.Println(arr)
 			nodes = append(nodes, NewNode(arr))
 
 		} else if token[0] == '"' { //string
@@ -199,7 +197,17 @@ func Eval(node Node, env Environment) (ret Node) {
 	default:
 		if node.Type == Tsymbol {
 			if variable, err := env.Get(node.Vsymbol); err == nil {
-				ret = variable.(Variable).Value
+				if reflect.TypeOf(variable).String() == "compiler.Buildin" {
+					//fmt.Println(reflect.TypeOf(variable.(Buildin).Func).String())
+					ret = NewNode(variable.(Buildin).Func)
+
+					//fmt.Println(ret)
+
+				} else if reflect.TypeOf(variable).String() == "compiler.Variable" {
+					ret = variable.(Variable).Value
+				} else {
+					panic("node.Vsymbol is not a variable or a function")
+				}
 			}
 		} else {
 			ret = node

@@ -18,6 +18,7 @@ const (
 	Tlist
 	Tsymbol
 	Tfunc
+	Tbuildin
 	Tnode
 	Tarray
 )
@@ -39,15 +40,16 @@ func (l NodeList) String() (ret string) {
 type Node struct {
 	Type NodeType
 
-	Vstring string
-	Vint    int
-	Vdouble float64
-	Vbool   bool
-	Vlist   NodeList
-	Vnode   []Node
-	Vsymbol string
-	Vfunc   Func
-	Varray  []interface{}
+	Vstring  string
+	Vint     int
+	Vdouble  float64
+	Vbool    bool
+	Vlist    NodeList
+	Vnode    []Node
+	Vsymbol  string
+	Vfunc    Func
+	Vbuildin func([]Node, Environment) interface{}
+	Varray   []interface{}
 }
 
 func (node Node) Value() (ret interface{}) {
@@ -125,6 +127,8 @@ func (node Node) String() (ret string) {
 			ret += NewNode(item).ToString() + " "
 		}
 		ret = ret[:len(ret)-1] + "]"
+	case Tbuildin:
+		ret = "buildin"
 	}
 
 	return
@@ -169,6 +173,13 @@ func NewNode(data interface{}) (node Node) {
 			Type:  Tfunc,
 			Vfunc: data.(Func),
 		}
+
+	} else if reflect.TypeOf(data).String() == "func([]compiler.Node, compiler.Environment) interface {}" {
+		node = Node{
+			Type:     Tbuildin,
+			Vbuildin: data.(func([]Node, Environment) interface{}),
+		}
+
 	} else if reflect.TypeOf(data).String() == "[]interface {}" {
 		node = Node{
 			Type:   Tarray,

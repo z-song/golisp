@@ -23,11 +23,17 @@ func Plus(args []Node, Env Environment) (ret interface{}) {
 			sum += val
 		}
 		ret = NewNode(sum)
-	}
-	if first.Type == Tdouble {
+	} else if first.Type == Tdouble {
 		sum := first.Value().(float64)
 		for pos, len := 2, len(args)-1; pos <= len; pos++ {
 			val, _ := Eval(args[pos], Env).ToDouble()
+			sum += val
+		}
+		ret = NewNode(sum)
+	} else {
+		sum, _ := first.ToInt()
+		for pos, len := 2, len(args)-1; pos <= len; pos++ {
+			val, _ := Eval(args[pos], Env).ToInt()
 			sum += val
 		}
 		ret = NewNode(sum)
@@ -110,7 +116,9 @@ func Divide(args []Node, Env Environment) (ret interface{}) {
 func Print(args []Node, Env Environment) (ret interface{}) {
 
 	for pos, len := 0, len(args)-1; pos <= len; pos++ {
-		fmt.Println((Eval(args[pos], Env).Value()))
+
+		node := Eval(args[pos], Env)
+		fmt.Println(node.Value())
 	}
 	ret = NewNode(1)
 
@@ -168,8 +176,6 @@ func Lambda(args []Node, Env Environment) (ret interface{}) {
 
 	fun.Body = args[1].Vnode
 
-	//fmt.Println(NewNode(fun))
-
 	ret = Eval(NewNode(fun), Env)
 
 	return
@@ -177,16 +183,24 @@ func Lambda(args []Node, Env Environment) (ret interface{}) {
 
 // (call add '(1 2 3 4))
 func Call(args []Node, Env Environment) (ret interface{}) {
-	fun := Eval(args[0], Env).Vfunc
-	fun.Env.Variables = make(map[string]interface{})
 
-	for index, _ := range fun.Args {
-		fun.Args[index].Value = args[1].Vnode[index]
+	op := Eval(args[0], Env)
 
-		fun.Env.Register(NewVariable(fun.Args[index].Name, args[1].Vnode[index]))
+	if op.Type == Tfunc { //call function
+
+		fun := op.Vfunc
+		fun.Env.Variables = make(map[string]interface{})
+
+		for index, _ := range fun.Args {
+			fun.Args[index].Value = args[1].Vnode[index]
+
+			fun.Env.Register(NewVariable(fun.Args[index].Name, args[1].Vnode[index]))
+		}
+
+		ret = NewNode(Eval(NewNode(fun.Body), fun.Env).Value())
+	} else { //call buildin
+		ret = (op.Vbuildin)(args[1].Vnode, Env)
 	}
-
-	ret = NewNode(Eval(NewNode(fun.Body), fun.Env).Value())
 
 	return
 }
@@ -194,7 +208,7 @@ func Call(args []Node, Env Environment) (ret interface{}) {
 // (map print '(1 2 3 4))
 func Map(args []Node, Env Environment) (ret interface{}) {
 
-	if reflect.TypeOf(args[1].Value()).String() == "compiler.NodeList" {
+	if reflect.TypeOf(args[1].Value()).String() == "compiler.NodeList" { //map function to list
 		list := args[1].Value().(NodeList)
 
 		var res NodeList
@@ -207,7 +221,8 @@ func Map(args []Node, Env Environment) (ret interface{}) {
 		}
 
 		ret = NewNode(res)
-	} else if reflect.TypeOf(args[1].Value()).String() == "[]interface {}" {
+
+	} else if reflect.TypeOf(args[1].Value()).String() == "[]interface {}" { //map function to array
 
 		var res []interface{}
 		for _, ele := range args[1].Value().([]interface{}) {
@@ -225,14 +240,104 @@ func Map(args []Node, Env Environment) (ret interface{}) {
 	return
 }
 
-// todo
-func List(args []Node, Env Environment) (ret interface{}) {
+// todo (filter func [3 3 6 7 8])
+func Filter(args []Node, Env Environment) (ret interface{}) {
 
 	return
 }
 
 // todo
 func Fold(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// (array 1 2 3 4 "hello")
+func Array(args []Node, Env Environment) (ret interface{}) {
+
+	var res []interface{}
+	for _, arg := range args {
+		res = append(res, arg.Value())
+	}
+
+	return NewNode(res)
+}
+
+// todo
+func List(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (== 1 3)
+func Equal(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (!= 2 3)
+func Notequal(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (&& 2 3)
+func And(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (&& 2 3)
+func Or(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+//cast
+// todo (string 123)
+func String(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (string 123)
+func Int(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (string 123)
+func Double(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (string 123)
+func Type(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (if (> x y) x y)
+func If(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (if (> x y) x y)
+func For(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (cond (> x y) x y)
+func Cond(args []Node, Env Environment) (ret interface{}) {
+
+	return
+}
+
+// todo (when (> x y) x y)
+func When(args []Node, Env Environment) (ret interface{}) {
 
 	return
 }

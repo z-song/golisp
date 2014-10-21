@@ -2,7 +2,7 @@ package ext
 
 import (
 	"../compiler"
-	"fmt"
+	//"fmt"
 	"strings"
 )
 
@@ -60,9 +60,39 @@ func Split(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
 	str := args[0].ToString()
 	sep := args[1].ToString()
 
-	strArr := strings.Split(str, sep)
+	var res []interface{}
+	for _, piece := range strings.Split(str, sep) {
+		res = append(res, interface{}(piece))
+	}
 
-	fmt.Println(strArr)
+	return compiler.NewNode(res)
+}
 
-	return compiler.NewNode(str)
+// todo (strlen "hwello world")
+func Strlen(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
+	if args[0].Type != compiler.Tstring {
+		panic("[function strlen] argument 1 should be string type")
+	}
+	if len(args) != 1 {
+		panic("[function strlen] need 1 argument only")
+	}
+
+	strlen := len(args[0].Vstring)
+
+	return compiler.NewNode(strlen)
+}
+
+// todo (join ["hello" "world"] ",")
+func Join(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
+
+	var strArr []string
+	for _, str := range args[0].Varray {
+		strArr = append(strArr, str.(string))
+	}
+
+	str := strings.Join(strArr, args[1].ToString())
+
+	ret = compiler.NewNode(str)
+
+	return
 }

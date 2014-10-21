@@ -22,10 +22,13 @@ func Excute(code string) {
 	Global.Register(compiler.NewBuildin("lambda", compiler.Lambda))
 	Global.Register(compiler.NewBuildin("call", compiler.Call))
 	Global.Register(compiler.NewBuildin("map", compiler.Map))
+	Global.Register(compiler.NewBuildin("array", compiler.Array))
 
 	Global.Register(compiler.NewBuildin("substr", ext.Substr))
 	Global.Register(compiler.NewBuildin("append", ext.Append))
 	Global.Register(compiler.NewBuildin("split", ext.Split))
+	Global.Register(compiler.NewBuildin("strlen", ext.Strlen))
+	Global.Register(compiler.NewBuildin("join", ext.Join))
 
 	compiler.SetGlobal(Global)
 
