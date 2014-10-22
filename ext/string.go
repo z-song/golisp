@@ -44,16 +44,6 @@ func Substr(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
 	return compiler.NewNode(str)
 }
 
-// (append "hello" "world")
-func Append(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
-	var str string
-	for _, node := range args {
-		str += node.ToString()
-	}
-
-	return compiler.NewNode(str)
-}
-
 // (split )
 func Split(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
 

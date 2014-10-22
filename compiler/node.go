@@ -321,3 +321,24 @@ func (node Node) ToBool() (ret bool) {
 
 	return
 }
+
+func (node Node) ToArray() (ret []interface{}) {
+	if node.Type == Tint {
+		ret = append(ret, node.Vint)
+	}
+	if node.Type == Tdouble {
+		ret = append(ret, node.Vdouble)
+	}
+	if node.Type == Tstring {
+		ret = append(ret, node.Vstring)
+
+	}
+	if node.Type == Tbool {
+		ret = append(ret, node.Vbool)
+	}
+	if node.Type == Tarray {
+		ret = node.Varray
+	}
+
+	return
+}

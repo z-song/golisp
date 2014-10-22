@@ -132,6 +132,30 @@ func Define(args []Node, Env Environment) (ret interface{}) {
 	return NewNode(0)
 }
 
+// (append "hello" "world") (append ["hello"]  123 "world") -> ["hello" 123 "world"]
+func Append(args []Node, Env Environment) (ret interface{}) {
+	if args[0].Type == Tstring {
+		var str string
+		for _, node := range args {
+			str += node.ToString()
+		}
+
+		ret = NewNode(str)
+	}
+
+	if args[0].Type == Tarray {
+		var res []interface{}
+		res = args[0].Varray
+		for _, arg := range args[1:] {
+			res = append(res, arg.ToArray()...)
+		}
+
+		ret = NewNode(res)
+	}
+
+	return
+}
+
 // (apply '(+ 1 2 3 4))
 func Apply(args []Node, Env Environment) (ret interface{}) {
 	if len(args) != 2 {
