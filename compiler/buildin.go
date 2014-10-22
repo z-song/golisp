@@ -19,22 +19,19 @@ func Plus(args []Node, Env Environment) (ret interface{}) {
 	if first.Type == Tint {
 		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToInt()
-			sum += val
+			sum += Eval(args[pos], Env).ToInt()
 		}
 		ret = NewNode(sum)
 	} else if first.Type == Tdouble {
 		sum := first.Value().(float64)
 		for pos, len := 2, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToDouble()
-			sum += val
+			sum += Eval(args[pos], Env).ToDouble()
 		}
 		ret = NewNode(sum)
 	} else {
-		sum, _ := first.ToInt()
+		sum := first.ToInt()
 		for pos, len := 2, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToInt()
-			sum += val
+			sum += Eval(args[pos], Env).ToInt()
 		}
 		ret = NewNode(sum)
 	}
@@ -48,16 +45,14 @@ func Minus(args []Node, Env Environment) (ret interface{}) {
 	if first.Type == Tint {
 		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToInt()
-			sum -= val
+			sum -= Eval(args[pos], Env).ToInt()
 		}
 		ret = NewNode(sum)
 	}
 	if first.Type == Tdouble {
 		sum := first.Value().(float64)
 		for pos, len := 2, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToDouble()
-			sum -= val
+			sum -= Eval(args[pos], Env).ToDouble()
 		}
 		ret = NewNode(sum)
 	}
@@ -71,16 +66,14 @@ func Multiply(args []Node, Env Environment) (ret interface{}) {
 	if first.Type == Tint {
 		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToInt()
-			sum *= val
+			sum *= Eval(args[pos], Env).ToInt()
 		}
 		ret = NewNode(sum)
 	}
 	if first.Type == Tdouble {
 		sum := first.Value().(float64)
 		for pos, len := 2, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToDouble()
-			sum *= val
+			sum *= Eval(args[pos], Env).ToDouble()
 		}
 		ret = NewNode(sum)
 	}
@@ -95,16 +88,14 @@ func Divide(args []Node, Env Environment) (ret interface{}) {
 	if first.Type == Tint {
 		sum := first.Value().(int)
 		for pos, len := 1, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToInt()
-			sum /= val
+			sum /= Eval(args[pos], Env).ToInt()
 		}
 		ret = NewNode(sum)
 	}
 	if first.Type == Tdouble {
 		sum := first.Value().(float64)
 		for pos, len := 2, len(args)-1; pos <= len; pos++ {
-			val, _ := Eval(args[pos], Env).ToDouble()
-			sum /= val
+			sum /= Eval(args[pos], Env).ToDouble()
 		}
 		ret = NewNode(sum)
 	}
@@ -240,9 +231,21 @@ func Map(args []Node, Env Environment) (ret interface{}) {
 	return
 }
 
-// todo (filter func [3 3 6 7 8])
+// (filter func [3 3 6 7 8])
 func Filter(args []Node, Env Environment) (ret interface{}) {
+	var res []interface{}
+	for _, ele := range args[1].Value().([]interface{}) {
 
+		nodes := []Node{args[0]}
+		nodes = append(nodes, NewNode([]Node{NewNode(ele)}))
+		result := Call(nodes, Env)
+
+		if result.(Node).ToBool() {
+			res = append(res, ele)
+		}
+	}
+
+	ret = NewNode(res)
 	return
 }
 
@@ -263,26 +266,165 @@ func Array(args []Node, Env Environment) (ret interface{}) {
 	return NewNode(res)
 }
 
-// todo
+// (list 1 2 "hi") equals to '(1 2 "hi")
 func List(args []Node, Env Environment) (ret interface{}) {
+	var list NodeList
+	for _, arg := range args {
+		list.PushBack(arg.Value())
+	}
 
-	return
+	return NewNode(list)
 }
 
-// todo (== 1 3)
+// (== 1 3)
 func Equal(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 2 {
+		panic("[function ==] need 2 arguments")
+	}
 
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	is := false
+	if a.Type == b.Type {
+		is = a.Value() == b.Value()
+	}
+
+	ret = NewNode(is)
 	return
 }
 
-// todo (!= 2 3)
-func Notequal(args []Node, Env Environment) (ret interface{}) {
+// (!= 2 3)
+func Unequal(args []Node, Env Environment) (ret interface{}) {
 
+	if len(args) != 2 {
+		panic("[function ==] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	is := true
+	if a.Type == b.Type {
+		is = a.Value() != b.Value()
+	}
+
+	ret = NewNode(is)
+	return
+}
+
+// (> 2 3)
+func Gthan(args []Node, Env Environment) (ret interface{}) {
+
+	if len(args) != 2 {
+		panic("[function ==] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	is := false
+	if a.Type == b.Type {
+		if a.Type == Tint {
+			is = a.ToInt() > b.ToInt()
+		} else if a.Type == Tdouble {
+			is = a.ToDouble() > b.ToDouble()
+		} else if a.Type == Tstring {
+			is = a.ToString() > b.ToString()
+		} else if a.Type == Tbool {
+			is = a.ToInt() > b.ToInt()
+		}
+	}
+
+	ret = NewNode(is)
+	return
+}
+
+// (< 2 3)
+func Lthan(args []Node, Env Environment) (ret interface{}) {
+
+	if len(args) != 2 {
+		panic("[function ==] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	is := false
+	if a.Type == b.Type {
+		if a.Type == Tint {
+			is = a.ToInt() < b.ToInt()
+		} else if a.Type == Tdouble {
+			is = a.ToDouble() < b.ToDouble()
+		} else if a.Type == Tstring {
+			is = a.ToString() < b.ToString()
+		} else if a.Type == Tbool {
+			is = a.ToInt() < b.ToInt()
+		}
+	}
+
+	ret = NewNode(is)
+	return
+}
+
+// (>= 2 3)
+func Gequal(args []Node, Env Environment) (ret interface{}) {
+
+	if len(args) != 2 {
+		panic("[function ==] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	is := false
+	if a.Type == b.Type {
+		if a.Type == Tint {
+			is = a.ToInt() >= b.ToInt()
+		} else if a.Type == Tdouble {
+			is = a.ToDouble() >= b.ToDouble()
+		} else if a.Type == Tstring {
+			is = a.ToString() >= b.ToString()
+		} else if a.Type == Tbool {
+			is = a.ToInt() >= b.ToInt()
+		}
+	}
+
+	ret = NewNode(is)
+	return
+}
+
+// (<= 2 3)
+func Lequal(args []Node, Env Environment) (ret interface{}) {
+
+	if len(args) != 2 {
+		panic("[function ==] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	is := false
+	if a.Type == b.Type {
+		if a.Type == Tint {
+			is = a.ToInt() <= b.ToInt()
+		} else if a.Type == Tdouble {
+			is = a.ToDouble() <= b.ToDouble()
+		} else if a.Type == Tstring {
+			is = a.ToString() <= b.ToString()
+		} else if a.Type == Tbool {
+			is = a.ToInt() <= b.ToInt()
+		}
+	}
+
+	ret = NewNode(is)
 	return
 }
 
 // todo (&& 2 3)
 func And(args []Node, Env Environment) (ret interface{}) {
+
+	if len(args) != 2 {
+		panic("[function &&] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	ret = NewNode(a.ToBool() && b.ToBool())
 
 	return
 }
@@ -290,32 +432,61 @@ func And(args []Node, Env Environment) (ret interface{}) {
 // todo (&& 2 3)
 func Or(args []Node, Env Environment) (ret interface{}) {
 
+	if len(args) != 2 {
+		panic("[function ||] need 2 arguments")
+	}
+
+	a, b := Eval(args[0], Env), Eval(args[1], Env)
+
+	ret = NewNode(a.ToBool() || b.ToBool())
 	return
+}
+
+// (type "hello")
+func Type(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function type] need 1 argument only")
+	}
+
+	return NewNode(Eval(args[0], Env).TypeString())
 }
 
 //cast
-// todo (string 123)
+// (string 123)
 func String(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function string] need 1 argument only")
+	}
 
-	return
+	return NewNode(Eval(args[0], Env).ToString())
 }
 
-// todo (string 123)
+// (int "123")
 func Int(args []Node, Env Environment) (ret interface{}) {
 
-	return
+	if len(args) != 1 {
+		panic("[function int] need 1 argument only")
+	}
+
+	return NewNode(Eval(args[0], Env).ToInt())
 }
 
-// todo (string 123)
+// (double "123.456")
 func Double(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function double] need 1 argument only")
+	}
 
-	return
+	return NewNode(Eval(args[0], Env).ToDouble())
 }
 
-// todo (string 123)
-func Type(args []Node, Env Environment) (ret interface{}) {
+// (bool "123.456")
+func Bool(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function bool] need 1 argument only")
+	}
 
-	return
+	return NewNode(Eval(args[0], Env).ToBool())
 }
 
 // todo (if (> x y) x y)
@@ -340,4 +511,40 @@ func Cond(args []Node, Env Environment) (ret interface{}) {
 func When(args []Node, Env Environment) (ret interface{}) {
 
 	return
+}
+
+// todo (when (> x y) x y)
+func Car(args []Node, Env Environment) (ret interface{}) {
+	list := Eval(args[0], Env)
+	if len(args) != 1 {
+		panic("[function car] need 1 argument only")
+	}
+	if list.Type != Tlist {
+		panic("[function car] argument 1 should be list type")
+	}
+
+	var res NodeList
+
+	res.PushBack(list.Vlist.Front().Value)
+
+	return NewNode(res)
+}
+
+// todo (cdr '(1 2 3 4 5))
+func Cdr(args []Node, Env Environment) (ret interface{}) {
+
+	list := Eval(args[0], Env)
+	if len(args) != 1 {
+		panic("[function car] need 1 argument only")
+	}
+	if list.Type != Tlist {
+		panic("[function car] argument 1 should be list type")
+	}
+
+	var res NodeList
+	for e := list.Vlist.Front().Next(); e != nil; e = e.Next() {
+		res.PushBack(e.Value)
+	}
+
+	return NewNode(res)
 }

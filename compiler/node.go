@@ -87,6 +87,35 @@ func (node Node) Value() (ret interface{}) {
 	return
 }
 
+func (node Node) TypeString() (ret string) {
+	switch node.Type {
+	case Tnil:
+		ret = "nil"
+	case Tint:
+		ret = "int"
+	case Tdouble:
+		ret = "double"
+	case Tbool:
+		ret = "bool"
+	case Tstring:
+		ret = "string"
+	case Tlist:
+		ret = "list"
+	case Tnode:
+		ret = "nodes"
+	case Tsymbol:
+		ret = "symble"
+	case Tfunc:
+		ret = "lambda"
+	case Tarray:
+		ret = "array"
+	default:
+		ret = "unknown"
+	}
+
+	return
+}
+
 func (node Node) String() (ret string) {
 	switch node.Type {
 	case Tnil:
@@ -223,7 +252,7 @@ func (node Node) ToString() (ret string) {
 	return
 }
 
-func (node Node) ToInt() (ret int, err error) {
+func (node Node) ToInt() (ret int) {
 
 	ret = 0
 
@@ -248,7 +277,7 @@ func (node Node) ToInt() (ret int, err error) {
 	return
 }
 
-func (node Node) ToDouble() (ret float64, err error) {
+func (node Node) ToDouble() (ret float64) {
 	ret = 0
 	if node.Type == Tint {
 		ret = float64(node.Vint)
@@ -266,6 +295,28 @@ func (node Node) ToDouble() (ret float64, err error) {
 		} else {
 			ret = 0
 		}
+	}
+
+	return
+}
+
+func (node Node) ToBool() (ret bool) {
+	ret = false
+	if node.Type == Tint {
+		ret = node.Vint != 0
+	}
+	if node.Type == Tdouble {
+		ret = node.Vdouble != 0
+	}
+	if node.Type == Tstring {
+		ret = node.Vstring != ""
+
+	}
+	if node.Type == Tbool {
+		ret = node.Vbool
+	}
+	if node.Type == Tarray {
+		ret = len(node.Varray) != 0
 	}
 
 	return

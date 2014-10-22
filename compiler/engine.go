@@ -27,7 +27,13 @@ func (scanner *Scanner) Tokenize() (tokens []string) {
 	for pos, len := 0, len(scanner.Code)-1; pos <= len; pos++ {
 		char := byte(scanner.Code[pos])
 
-		if char == '(' {
+		if char == ';' || char == '#' {
+			scanner.emit()
+			pos++
+			for pos <= len-1 && scanner.Code[pos] != '\n' {
+				pos++
+			}
+		} else if char == '(' {
 			scanner.unclosed++
 			scanner.emit()
 			scanner.acc += string(char)
@@ -183,25 +189,52 @@ func Eval(node Node, env Environment) (ret Node) {
 			if len(node.Vnode) == 0 {
 				break
 			}
-			fn := node.Vnode[0].Vsymbol
-			if fn == "" {
-				panic("invalid application")
-			}
 
-			if build, err := env.Get(fn); err == nil {
+			if Eval(node.Vnode[0], env).Type == Tfunc {
 
-				call := build.(Buildin).Func
-				ret = call(node.Vnode[1:], env).(Node)
+				fun := Eval(node.Vnode[0], env).Vfunc
+				fun.Env.Variables = make(map[string]interface{})
+
+				for index, _ := range fun.Args {
+					fun.Args[index].Value = node.Vnode[1:][index]
+
+					fun.Env.Register(NewVariable(fun.Args[index].Name, node.Vnode[1:][index]))
+				}
+
+				ret = NewNode(Eval(NewNode(fun.Body), fun.Env).Value())
+			} else {
+				fn := node.Vnode[0].Vsymbol
+				if fn == "" {
+					panic("invalid application")
+				}
+
+				if build, err := env.Get(fn); err == nil {
+
+					if reflect.TypeOf(build).String() == "compiler.Variable" {
+
+						fun := build.(Variable).Value.Vfunc
+						fun.Env.Variables = make(map[string]interface{})
+
+						for index, _ := range fun.Args {
+							fun.Args[index].Value = node.Vnode[1:][index]
+
+							fun.Env.Register(NewVariable(fun.Args[index].Name, node.Vnode[1:][index]))
+						}
+
+						ret = NewNode(Eval(NewNode(fun.Body), fun.Env).Value())
+					} else {
+
+						call := build.(Buildin).Func
+						ret = call(node.Vnode[1:], env).(Node)
+					}
+				}
 			}
 		}
 	default:
 		if node.Type == Tsymbol {
 			if variable, err := env.Get(node.Vsymbol); err == nil {
 				if reflect.TypeOf(variable).String() == "compiler.Buildin" {
-					//fmt.Println(reflect.TypeOf(variable.(Buildin).Func).String())
 					ret = NewNode(variable.(Buildin).Func)
-
-					//fmt.Println(ret)
 
 				} else if reflect.TypeOf(variable).String() == "compiler.Variable" {
 					ret = variable.(Variable).Value
