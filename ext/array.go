@@ -23,3 +23,7 @@ func Fill(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
 
 	return compiler.NewNode(res)
 }
+
+func Member(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
+
+}

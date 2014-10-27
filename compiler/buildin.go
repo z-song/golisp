@@ -513,26 +513,47 @@ func Bool(args []Node, Env Environment) (ret interface{}) {
 	return NewNode(Eval(args[0], Env).ToBool())
 }
 
-// todo (if (> x y) x y)
+// (if (> x y) x y)
 func If(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 3 {
+		panic("[function if] need 3 arguments")
+	}
+
+	if Eval(args[0], Env).ToBool() {
+		ret = Eval(args[1], Env)
+	} else {
+		ret = Eval(args[2], Env)
+	}
+
+	return
+}
+
+// (when (> x y) x y)
+func When(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 2 {
+		panic("[function when] need 2 arguments")
+	}
+
+	if Eval(args[0], Env).ToBool() {
+		ret = Eval(args[1], Env)
+	} else {
+		ret = Node{Type: Tnil}
+	}
+
+	return
+}
+
+// (cond
+//   [(positive? -5) (error "doesn't get here")]
+//   [(zero? -5) (error "doesn't get here, either")]
+//   [(positive? 5) 'here])
+func Cond(args []Node, Env Environment) (ret interface{}) {
 
 	return
 }
 
 // todo (if (> x y) x y)
 func For(args []Node, Env Environment) (ret interface{}) {
-
-	return
-}
-
-// todo (cond (> x y) x y)
-func Cond(args []Node, Env Environment) (ret interface{}) {
-
-	return
-}
-
-// todo (when (> x y) x y)
-func When(args []Node, Env Environment) (ret interface{}) {
 
 	return
 }

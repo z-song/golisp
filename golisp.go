@@ -28,6 +28,9 @@ func Excute(code string) {
 	Global.Register(compiler.NewBuildin("&&", compiler.And))
 	Global.Register(compiler.NewBuildin("||", compiler.Or))
 
+	Global.Register(compiler.NewBuildin("if", compiler.If))
+	Global.Register(compiler.NewBuildin("when", compiler.When))
+
 	Global.Register(compiler.NewBuildin("print", compiler.Print))
 	Global.Register(compiler.NewBuildin("define", compiler.Define))
 	Global.Register(compiler.NewBuildin("append", compiler.Append))
