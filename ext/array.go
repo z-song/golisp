@@ -24,6 +24,30 @@ func Fill(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
 	return compiler.NewNode(res)
 }
 
-func Member(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
+func Range(args []compiler.Node, Env compiler.Environment) (ret interface{}) {
 
+	var arr []interface{}
+
+	//(range 3) -> [0 1 2]
+	if len(args) == 1 {
+		for i := 0; i < args[0].Value().(int); i++ {
+			arr = append(arr, i)
+		}
+	}
+
+	//(range 3 6) -> [3 4 5]
+	if len(args) == 2 {
+		for i := args[0].Value().(int); i < args[1].Value().(int); i++ {
+			arr = append(arr, i)
+		}
+	}
+
+	//(range 3 10 1) -> [3 4.5 6 7.5 9]
+	if len(args) == 3 {
+		for i := args[0].Value().(int); i < args[1].Value().(int); i += args[2].Value().(int) {
+			arr = append(arr, i)
+		}
+	}
+
+	return compiler.NewNode(arr)
 }

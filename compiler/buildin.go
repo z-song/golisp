@@ -513,6 +513,43 @@ func Bool(args []Node, Env Environment) (ret interface{}) {
 	return NewNode(Eval(args[0], Env).ToBool())
 }
 
+// (string? "123")
+func IsString(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function string] need 1 argument only")
+	}
+
+	return NewNode(Eval(args[0], Env).Type == Tstring)
+}
+
+// (int? "123")
+func IsInt(args []Node, Env Environment) (ret interface{}) {
+
+	if len(args) != 1 {
+		panic("[function int] need 1 argument only")
+	}
+
+	return NewNode(Eval(args[0], Env).Type == Tint)
+}
+
+// (double? "123.456")
+func IsDouble(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function double] need 1 argument only")
+	}
+
+	return NewNode(Eval(args[0], Env).Type == Tdouble)
+}
+
+// (bool? "123.456")
+func IsBool(args []Node, Env Environment) (ret interface{}) {
+	if len(args) != 1 {
+		panic("[function bool] need 1 argument only")
+	}
+
+	return NewNode(Eval(args[0], Env).Type == Tbool)
+}
+
 // (if (> x y) x y)
 func If(args []Node, Env Environment) (ret interface{}) {
 	if len(args) != 3 {
@@ -548,6 +585,16 @@ func When(args []Node, Env Environment) (ret interface{}) {
 //   [(zero? -5) (error "doesn't get here, either")]
 //   [(positive? 5) 'here])
 func Cond(args []Node, Env Environment) (ret interface{}) {
+	ret = Node{Type: Tnil}
+	for _, pair := range args {
+		if pair.Type != Tarray {
+			panic("[function cond] conditions should be array type")
+		}
+		if Eval(NewNode(pair.Varray[0]), Env).ToBool() {
+			ret = Eval(NewNode(pair.Varray[1]), Env)
+			break
+		}
+	}
 
 	return
 }
@@ -592,4 +639,40 @@ func Cdr(args []Node, Env Environment) (ret interface{}) {
 	}
 
 	return NewNode(res)
+}
+
+// (member [1 2 3 4] 5)
+func Member(args []Node, Env Environment) (ret interface{}) {
+	node := Eval(args[0], Env)
+
+	var val interface{}
+	index := args[1].ToInt()
+
+	if node.Type == Tlist {
+		if index >= node.Vlist.Len() {
+			index = node.Vlist.Len() - 1
+		}
+		if index < 0 {
+			index = 0
+		}
+
+		e := node.Vlist.Front()
+		for i := 0; i < index; i++ {
+			e = e.Next()
+		}
+		val = e.Value
+
+	} else if node.Type == Tarray {
+		if index > len(node.Varray) {
+			index = len(node.Varray)
+		}
+		if index < 0 {
+			index = 0
+		}
+
+		val = node.Varray[index]
+	}
+
+	return NewNode(val)
+
 }
