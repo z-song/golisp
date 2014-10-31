@@ -86,5 +86,15 @@ func init() {
 	Global.Register(compiler.NewBuildin("fill", ext.Fill))
 	Global.Register(compiler.NewBuildin("range", ext.Range))
 
+	Global.Register(compiler.NewBuildin("now", ext.Now))
+	Global.Register(compiler.NewBuildin("year", ext.Year))
+	Global.Register(compiler.NewBuildin("month", ext.Month))
+	Global.Register(compiler.NewBuildin("day", ext.Day))
+	Global.Register(compiler.NewBuildin("hour", ext.Hour))
+	Global.Register(compiler.NewBuildin("minute", ext.Minute))
+	Global.Register(compiler.NewBuildin("second", ext.Second))
+	Global.Register(compiler.NewBuildin("yearday", ext.YearDay))
+	Global.Register(compiler.NewBuildin("timestamp", ext.Timestamp))
+
 	compiler.SetGlobal(Global)
 }
