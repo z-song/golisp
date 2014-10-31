@@ -1,7 +1,7 @@
 package ext
 
 import (
-	"../compiler"
+	"github.com/z-song/golisp/compiler"
 	//"fmt"
 	"strings"
 )

@@ -1,8 +1,8 @@
 package golisp
 
 import (
-	"./compiler"
-	"./ext"
+	"github.com/z-song/golisp/compiler"
+	"github.com/z-song/golisp/ext"
 	//"fmt"
 	"io/ioutil"
 )
