@@ -2,7 +2,7 @@
 package main
 
 import (
-	golisp "./golisp"
+	"github.com/z-song/golisp"
 )
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 
 	   `
 
-	golisp.Excute(code)
+	golisp.EvalString(code)
 
 }
 
